@@ -22,12 +22,12 @@ CONTAINS
     WRITE(iti,'(i10.10)') it
 !
     dimd=0.2*lx
+    dimd=4.*lx
     deltax=0.
     deltaz=5.
 !
     name='vx'
     ww(1:nx+1,1:nz+1)=(vx(1:nx+1,1:nz+1)+vx(0:nx,1:nz+1)+vx(1:nx+1,0:nz)+vx(0:nx,0:nz))/4.
-!    ww(1:nx+1,1:nz+1)=vz(1:nx+1,1:nz+1)
     DO i=1,nx+1
       DO j=1,nz+1
         IF (abs(ww(i,j)) < 1.e-12) ww(i,j)=0.
@@ -38,13 +38,30 @@ CONTAINS
     name1=name//iti
     wmin=minval(ww(1:nx+1,1:nz+1))
     wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
     CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
 !    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K >','-O -K>>')
     CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K >',' -O >> ')
-
+!
+    name='xa'
+    ww(1:nx+1,1:nz+1)=(vx_a(1:nx+1,1:nz+1)+vx_a(0:nx,1:nz+1)+vx_a(1:nx+1,0:nz)+vx_a(0:nx,0:nz))/4.
+    DO i=1,nx+1
+      DO j=1,nz+1
+        IF (abs(ww(i,j)) < 1.e-12) ww(i,j)=0.
+      ENDDO
+    ENDDO
+    xpos=2.
+    zpos=22.
+    name1=name//iti
+    wmin=minval(ww(1:nx+1,1:nz+1))
+    wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
+    CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
+!    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K >','-O -K>>')
+    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K >',' -O >> ')
+!
     name='vz'
     ww(1:nx+1,1:nz+1)=vz(1:nx+1,1:nz+1)
-!    ww(1:nx+1,1:nz+1)=vz(1:nx+1,1:nz+1)-vz_a(1:nx+1,1:nz+1)
     DO i=1,nx+1
       DO j=1,nz+1
         IF (abs(ww(i,j)) < 1.e-12) ww(i,j)=0.
@@ -55,6 +72,24 @@ CONTAINS
     name1=name//iti
     wmin=minval(ww(1:nx+1,1:nz+1))
     wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
+    CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
+!    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-O -K>>','-O -K>>')
+    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K> ',' -O >> ')
+!
+    name='za'
+    ww(1:nx+1,1:nz+1)=vz_a(1:nx+1,1:nz+1)
+    DO i=1,nx+1
+      DO j=1,nz+1
+        IF (abs(ww(i,j)) < 1.e-12) ww(i,j)=0.
+      ENDDO
+    ENDDO
+    xpos=xpos
+    zpos=zpos-deltaz
+    name1=name//iti
+    wmin=minval(ww(1:nx+1,1:nz+1))
+    wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
     CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
 !    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-O -K>>','-O -K>>')
     CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K> ',' -O >> ')
@@ -74,6 +109,27 @@ CONTAINS
     name1=name//iti
     wmin=minval(ww(1:nx+1,1:nz+1))
     wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
+    CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
+!    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-O -K>>','-O -K>>')
+    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K> ',' -O >> ')
+!
+    name='pa'
+    ww(1:nx+1,1:nz+1)=(pr_a(1:nx+1,1:nz+1)+pr_a(1:nx+1,0:nz))/2.
+!    name='Wy'
+!    ww(1:nx+1,1:nz+1)=(vx(1:nx+1,2:nz+2)-vx(1:nx+1,0:nz  ))/dz/2.&
+!                     -(vz(2:nx+2,1:nz+1)-vz(0:nx  ,1:nz+1))/dx/2.
+    DO i=1,nx+1
+      DO j=1,nz+1
+        IF (abs(ww(i,j)) < 1.e-12) ww(i,j)=0.
+      ENDDO
+    ENDDO
+    xpos=2.
+    zpos=zpos-deltaz
+    name1=name//iti
+    wmin=minval(ww(1:nx+1,1:nz+1))
+    wmax=maxval(ww(1:nx+1,1:nz+1))
+    WRITE(6,*) 'it=',it,name,wmin,wmax
     CALL GMT_format(ww,nx+1,nz+1,power,100,name1,wmin,wmax)
 !    CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-O -K>>','-O -K>>')
     CALL GMT_dessin(name,power,iti,xpos,zpos,dimd,wmin,wmax,'-P -K> ',' -O >> ')
@@ -236,6 +292,7 @@ CONTAINS
     name1=name2//iti//'_gmt'
     xech=xpos+dimd*lx/2.
     dime=4.*dimd*lx/5.
+    dime=dimd*lx
     gap=(wmax-wmin)/2.
     gap=float(INT(10.*gap))/10.
 !
@@ -264,7 +321,8 @@ CONTAINS
        ':@%29%'//name2//':/:10@+',power,'@+:WS -Xa',xech,&
        ' -Ya',ypos-1.,' -C'//name1//'.cpt '//ph2//name2//iti//'.ps'
     ENDIF
-    WRITE(95,'(a)') 'ps2epsi '//name2//iti//'.ps'
+!    WRITE(95,'(a)') 'ps2eps -q -f '//name2//iti//'.ps'
+    WRITE(95,'(a)') 'ps2pdf '//name2//iti//'.ps'
 !
   END SUBROUTINE GMT_dessin
 !

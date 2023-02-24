@@ -219,10 +219,12 @@ CONTAINS
     USE constantes  , ONLY : nx,nz,md,dx,dz
     USE inv_mat_band, ONLY : tridiag,cyclic,cyclic_nr,tridiag_nr
     USE mod_bounds  , ONLY : bounds_VX
+    USE tableaux, ONLY : Zvx
 !$  USE OMP_LIB
     IMPLICIT NONE
     INTEGER :: ix,iz
     REAL(KIND=8) :: diff,dt,kdttdx2,kdttdz2
+    REAL(KIND=8) :: lpp0, lpp1, lpp2
     REAL(KIND=8), DIMENSION(1:md) :: da,db,dc,sm,sol
     REAL(KIND=8), DIMENSION(-1:nx+3,-1:nz+3) :: w
     REAL(KIND=8), DIMENSION(-1:nx+3,-1:nz+3), INTENT(INOUT) :: ux
@@ -235,9 +237,19 @@ CONTAINS
     DO iz=1,nz
        da(1:nx)=    -kdttdx2
        db(1:nx)=1.+2.*kdttdx2
-       dc(1:nx)=da(1:nx) 
-       sm(1:nx)=ux(1:nx,iz)+(ux(1:nx,iz+1)-2.*ux(1:nx,iz)+ux(1:nx,iz-1))*kdttdz2 &
-               +rhs(1:nx,iz)*dt/2.
+       dc(1:nx)=da(1:nx)
+    DO ix=1, nx
+        lpp0=2/((Zvx(iz-1)-Zvx(iz))*(Zvx(iz-1)-Zvx(iz+1)))
+        lpp1=2/((Zvx(iz)-Zvx(iz-1))*(Zvx(iz)-Zvx(iz+1)))
+        lpp2=2/((Zvx(iz+1)-Zvx(iz-1))*(Zvx(iz+1)-Zvx(iz)))
+
+        sm(ix)= lpp0*ux(ix, iz-1)*diff*dt/2. &
+                +(1.+diff*dt/2.*lpp1)*ux(ix, iz) &
+                +lpp2*ux(ix, iz+1)*diff*dt/2. &
+                +rhs(ix,iz)*dt/2.
+    ENDDO
+!       sm(1:nx)=ux(1:nx,iz)+(ux(1:nx,iz+1)-2.*ux(1:nx,iz)+ux(1:nx,iz-1))*kdttdz2 &
+!               +rhs(1:nx,iz)*dt/2.
        CALL cyclic_nr(da,db,dc,dc(nx),da(1),sm,sol,nx)
        w(1:nx,iz)=sol(1:nx)
     ENDDO
@@ -245,9 +257,18 @@ CONTAINS
 !
     da=0. ; db=0. ; dc=0. ; sm=0.
     DO ix=1,nx
-       da(1:nz)=    -kdttdz2
-       db(1:nz)=1.+2.*kdttdz2
-       dc(1:nz)=da(1:nz) 
+!       da(1:nz)=    -kdttdz2
+!       db(1:nz)=1.+2.*kdttdz2
+!       dc(1:nz)=da(1:nz)
+        DO iz=1, nz
+            lpp0=2/((Zvx(iz-1)-Zvx(iz))*(Zvx(iz-1)-Zvx(iz+1)))
+            lpp1=2/((Zvx(iz)-Zvx(iz-1))*(Zvx(iz)-Zvx(iz+1)))
+            lpp2=2/((Zvx(iz+1)-Zvx(iz-1))*(Zvx(iz+1)-Zvx(iz)))
+
+            da(iz)=   -diff*dt/2.*lpp0
+            db(iz)= 1.-diff*dt/2.*lpp1
+            dc(iz)=   -diff*dt/2.*lpp2
+        ENDDO
        sm(1:nz)=w(ix,1:nz)+(w(ix+1,1:nz)-2.*w(ix,1:nz)+w(ix-1,1:nz))*kdttdx2 &
                  +rhs(ix,1:nz)*dt/2.
        db(1)=db(1)+da(1) ; da(1)=0.
@@ -262,13 +283,15 @@ CONTAINS
 !
   SUBROUTINE ADI_VZd(uz,rhs,diff,dt)
 !=====================================================================
-    USE constantes  , ONLY : nx,nz,md,dx,dz
+    USE constantes  , ONLY : nx,nz,md,dx
     USE inv_mat_band, ONLY : tridiag,cyclic,cyclic_nr,tridiag_nr
     USE mod_bounds  , ONLY : bounds_VZ
+    USE tableaux,     ONLY: Zvz
 !$  USE OMP_LIB
     IMPLICIT NONE
     INTEGER :: ix,iz
-    REAL(KIND=8) :: diff,dt,kdttdx2,kdttdz2
+    REAL(KIND=8) :: diff,dt,kdttdx2
+    REAL(KIND=8) :: lpp0, lpp1, lpp2
     REAL(KIND=8), DIMENSION(1:md) :: da,db,dc,sm,sol
     REAL(KIND=8), DIMENSION(-1:nx+3,-1:nz+3) :: w
     REAL(KIND=8), DIMENSION(-1:nx+3,-1:nz+3), INTENT(INOUT) :: uz
@@ -276,14 +299,23 @@ CONTAINS
 !=====================================================================
 !
     kdttdx2=diff*dt/2./dx**2
-    kdttdz2=diff*dt/2./dz**2
     da=0. ; db=0. ; dc=0. ; sm=0.
     DO iz=1,nz+1
-       da(1:nx)=    -kdttdx2
-       db(1:nx)=1.+2.*kdttdx2
-       dc(1:nx)=da(1:nx) 
-       sm(1:nx)=uz(1:nx,iz)+(uz(1:nx,iz+1)-2.*uz(1:nx,iz)+uz(1:nx,iz-1))*kdttdz2 &
-               +rhs(1:nx,iz)*dt/2.
+        lpp0=2/((Zvz(iz-1)-Zvz(iz))*(Zvz(iz-1)-Zvz(iz+1)))
+        lpp1=2/((Zvz(iz)-Zvz(iz-1))*(Zvz(iz)-Zvz(iz+1)))
+        lpp2=2/((Zvz(iz+1)-Zvz(iz-1))*(Zvz(iz+1)-Zvz(iz)))
+
+        da(1:nx)=    -kdttdx2
+        db(1:nx)=1.+2.*kdttdx2
+        dc(1:nx)=da(1:nx)
+        DO ix=1, nx
+            sm(ix)=lpp0*uz(ix, iz-1)*diff*dt/2. &
+                    +(1.+diff*dt/2.*lpp1)*uz(ix, iz) &
+                    +lpp2*uz(ix, iz+1)*diff*dt/2. &
+                    +rhs(ix,iz)*dt/2.
+        ENDDO
+!         sm(1:nx)=uz(1:nx,iz)+(uz(1:nx,iz+1)-2.*uz(1:nx,iz)+uz(1:nx,iz-1))*kdttdz2 &
+ !              +rhs(1:nx,iz)*dt/2.
        CALL cyclic_nr(da,db,dc,dc(nx),da(1),sm,sol,nx)
        w(1:nx,iz)=sol(1:nx)
     ENDDO
@@ -291,9 +323,18 @@ CONTAINS
 !
     da=0. ; db=0. ; dc=0. ; sm=0.
     DO ix=1,nx+1
-       da(1:nz+1)=    -kdttdz2
-       db(1:nz+1)=1.+2.*kdttdz2
-       dc(1:nz+1)=da(1:nz+1) 
+!       da(1:nz+1)=    -kdttdz2
+!       db(1:nz+1)=1.+2.*kdttdz2
+!       dc(1:nz+1)=da(1:nz+1)
+        DO iz=1, nz+1
+            lpp0=2/((Zvz(iz-1)-Zvz(iz))*(Zvz(iz-1)-Zvz(iz+1)))
+            lpp1=2/((Zvz(iz)-Zvz(iz-1))*(Zvz(iz)-Zvz(iz+1)))
+            lpp2=2/((Zvz(iz+1)-Zvz(iz-1))*(Zvz(iz+1)-Zvz(iz)))
+
+            da(iz)=    -diff*dt/2.*lpp0
+            db(iz)=  1.-diff*dt/2.*lpp1
+            dc(iz)=    -diff*dt/2.*lpp2
+        ENDDO
        sm(1:nz+1)=w(ix,1:nz+1)+(w(ix+1,1:nz+1)-2.*w(ix,1:nz+1)+w(ix-1,1:nz+1))*kdttdx2 &
                  +rhs(ix,1:nz+1)*dt/2.
        db(1)=1. ; da(1)=0. ; dc(1)=0. ; sm(1)=0.
