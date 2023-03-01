@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N Navier-Stokes
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=1gb
+#PBS -q nolimit
+#PBS -j oe
+#PBS -V
+#
+cd ${PBS_O_WORKDIR}
+#
+touch  job.$PBS_JOBID
+echo "HOST    :" $PBS_O_HOST >> job.$PBS_JOBID
+echo "QUEUE   :" $PBS_O_QUEUE >> job.$PBS_JOBID
+echo "WORKDIR :" $PBS_O_WORKDIR >> job.$PBS_JOBID
+echo "ENV     :" $PBS_ENVIRONMENT >> job.$PBS_JOBID
+echo "GPUFILE :" $PBS_GPUFILE >> job.$PBS_JOBID
+echo "JOBID   :" $PBS_JOBID >> job.$PBS_JOBID
+echo "JOBNAME :" $PBS_JOBNAME >> job.$PBS_JOBID
+echo "NODEFILE:" $PBS_NODEFILE >> job.$PBS_JOBID
+#
+make clean
+make
+/usr/bin/time -a -f "\t%U user,\t%S system,\t%e elapsed,\t%w wait, \t%" ./main >> job.$PBS_JOBID
+bash gmt_exe
+sync
+exit
